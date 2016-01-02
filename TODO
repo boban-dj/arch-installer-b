@@ -9,6 +9,9 @@
 ## TODO
 ################################################################################
 
+
+## bug with localctl list-keymaps in arch iso is preventing function from choosing us keymaps
+
 ## arch-install server plain, arch-install local machine
 ## xargs pacman install packages packages.aur
 ## integrate copy_config.sh

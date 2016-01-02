@@ -216,11 +216,6 @@ lso() {
 
 ################################################################################
 # SSH
-## ssh connect with boya-creations.nl
-alias boya='ssh -p 4000 boyacr1q@boya-creations.nl'
-alias linkandtrust='ssh -p 4000 linkan1q@link-and-trust.com'
-alias petya='ssh -p 4000 boban@petya.nl'
-alias vps='ssh -p 1919 boban@149.210.226.123'
 
 ################################################################################
 # APACHE

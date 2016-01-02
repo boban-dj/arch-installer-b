@@ -22,7 +22,7 @@ dialog --backtitle "ArchLinux Installation" --title "Welcome" --msgbox 'Proceed 
 ##Keyboard selection
 selected=0 #Set the variable $selected to 0, this will help to break the while
 while [ $selected == "0" ];do #Create the loop to select the keyboard
-	locales="$(localectl list-keymaps | awk '$locales=$locales" Keyboard"')" && locales=$(echo "$locales") #List all tha locales avaiable and add it a "Keyboard to the end, this is done because it have to fit in the menu. Then echo itself to generate a list.
+	locales="$(localectl list-keymaps | awk '$locales=$locales" Keyboard"')" && locales=$(echo "$locales") #List all the locales available and add it a "Keyboard to the end, this is done because it have to fit in the menu. Then echo itself to generate a list.
 	keyboard=$(dialog --backtitle "ArchLinux Installation" --clear --title "Choose your keymap: " --menu "Hi! Choose your favorite keymap:" 0 0 0 	${locales} 2>&1 > /dev/tty) #Generate the menu and save the answer to a variable. Redirect the error output(Answer) and redirect all the menu to the terminal.
 	if [ $? == 0 ];then #If the answer is "Accept"...
 		loadkeys $keyboard #Load the selected keymap
