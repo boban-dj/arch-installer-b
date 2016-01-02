@@ -1,0 +1,28 @@
+# system
+/etc/httpd/conf
+/etc/lightdm
+/etc/makepkg.conf
+/etc/nanorc
+/etc/pacman.d/mirrorlist
+/etc/php/php.ini
+/etc/ssh/sshd_config
+# home
+/home/boban/.bashrc
+/home/boban/.bash_profile
+/home/boban/.i3
+/home/boban/.i3status.conf
+/home/boban/.config/Thunar
+/home/boban/.config/xfce4
+/home/boban/.cache/sessions
+/home/boban/.dir_colors
+/home/boban/.dir_colors_256
+/home/boban/.xinitrc
+/home/boban/.Xresources.d
+/home/boban/.Xresources
+/home/boban/.nanorc
+/home/boban/Packages
+/home/boban/Packages.aur
+/home/boban/Scripts
+
+
+

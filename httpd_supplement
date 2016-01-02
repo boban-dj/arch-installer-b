@@ -1,0 +1,492 @@
+## MODIFIED BY Boban
+
+#
+# See github https://gist.github.com/boban-dj/2d86fb75e4652593e35c
+# ----------------------------------------------------------------------
+# Default Lang and Basic Security Behavior
+# ----------------------------------------------------------------------
+# X-Powered-By hidden by default nobody will notice if you're using PHP or ASP or whatever
+Header unset X-Powered-By
+# Set by default UTF-8 charset
+AddDefaultCharset UTF-8
+# ENGLISH language for this files, change it for your needs
+AddLanguage en-EN .html .htm .css .js
+# Set the default charset for every feed methods
+AddCharset utf-8 .atom .css .js .json .rss .vtt .xml
+# Amsterdam timezone, change it for your needs
+SetEnv TZ Europe/Amsterdam
+# Don not allow any pages to be framed - Defends against CSRF
+Header set X-Frame-Options SAMEORIGIN
+# Turn on IE8-IE9 XSS prevention tools
+Header set X-XSS-Protection "1; mode=block"
+# Only allow JavaScript from the same domain to be run.
+# Don not allow inline JavaScript to run.
+Header set X-Content-Security-Policy "allow 'self';"
+# Prevent mime based attacks
+Header set X-Content-Type-Options "nosniff"
+# Disable server sign
+ServerSignature Off
+ServerTokens Prod
+# drop Range header when more than 5 ranges. CVE-2011-3192
+SetEnvIf Range (,.*?){5,} bad-range=1
+RequestHeader unset Range env=bad-range
+# LIMIT UPLOAD FILE SIZE TO PROTECT AGAINST DOS ATTACK. Bytes, 0-2147483647(2GB)
+LimitRequestBody 2147483647
+
+
+
+
+## Test for config
+
+
+
+## USABILITY
+
+
+# Block access to backup and source files. These files may be left by some
+# text/html editors and pose a great security danger, when anyone can access
+# them.
+<FilesMatch "(\.(bak|config|sql|fla|psd|ini|log|sh|inc|swp|dist|pl)|~)$">
+  Order allow,deny
+  Deny from all
+  Satisfy All
+</FilesMatch>
+
+
+# ----------------------------------------------------------------------
+# Webfont access
+# ----------------------------------------------------------------------
+# Allow access from all domains for webfonts.Alternatively you could only whitelist your
+# subdomains like "subdomain.example.com".
+<IfModule mod_headers>
+  <FilesMatch "\.(ttf|ttc|otf|eot|woff|font.css)$">
+    Header set Access-Control-Allow-Origin "*"
+  </FilesMatch>
+</IfModule>
+
+
+
+
+# Block access to "hidden" directories or files whose names begin with a
+# period. This includes directories used by version control systems such as
+# Subversion or Git.
+<Directory "/srv/http">
+  RewriteEngine on
+  RewriteCond %{SCRIPT_FILENAME} -d [OR]
+  RewriteCond %{SCRIPT_FILENAME} -f
+  RewriteRule "(^|/)\." - [F]
+</Directory>
+
+
+
+## This was working as the rewrite rules not for disabling TRACE
+TraceEnable off
+#RewriteEngine on
+#RewriteCond %{REQUEST_METHOD} ^(TRACE|TRACK|DELETE)
+#RewriteRule .* - [F]
+
+
+
+## Test 1 for blocking bad_bots
+# blocking bots, spammers, harvesters...
+#SetEnvIfNoCase User-Agent "Download Ninja 2.0" block_bad_bots
+#SetEnvIfNoCase User-Agent "Fetch API Request" block_bad_bots
+#SetEnvIfNoCase User-Agent "HTTrack" block_bad_bots
+#SetEnvIfNoCase User-Agent "ia_archiver" block_bad_bots
+#SetEnvIfNoCase User-Agent "JBH Agent 2.0" block_bad_bots
+#SetEnvIfNoCase User-Agent "QuepasaCreep" block_bad_bots
+#SetEnvIfNoCase User-Agent "Program Shareware 1.0.0" block_bad_bots
+#SetEnvIfNoCase User-Agent "TestBED.6.3" block_bad_bots
+#SetEnvIfNoCase User-Agent "WebAuto" block_bad_bots
+#SetEnvIfNoCase User-Agent "WebCopier" block_bad_bots
+#SetEnvIfNoCase User-Agent "Wget/1.8.2" block_bad_bots
+#SetEnvIfNoCase User-Agent "Offline Explorer" block_bad_bots
+#SetEnvIfNoCase User-Agent "Franklin Locator" block_bad_bots
+#SetEnvIfNoCase User-Agent "LWP::Simple" block_bad_bots
+#SetEnvIfNoCase User-Agent "Larbin" block_bad_bots
+#SetEnvIfNoCase User-Agent "AA" block_bad_bots
+#SetEnvIfNoCase User-Agent "Rufus Web Miner" block_bad_bots
+#SetEnvIfNoCase User-Agent "Port Huron Labs" block_bad_bots
+#SetEnvIfNoCase User-Agent "Sphider" block_bad_bots
+#SetEnvIfNoCase User-Agent "voyager/1.0" block_bad_bots
+#SetEnvIfNoCase User-Agent "DynaWeb" block_bad_bots
+#SetEnvIfNoCase User-Agent "EmailCollector/1.0" block_bad_bots_bot
+#SetEnvIfNoCase User-Agent "EmailSiphon" block_bad_bots_bot
+#SetEnvIfNoCase User-Agent "EmailWolf 1.00" block_bad_bots_bot
+#SetEnvIfNoCase User-Agent "ExtractorPro" block_bad_bots_bot
+#SetEnvIfNoCase User-Agent "Crescent Internet ToolPak" block_bad_bots_bot
+#SetEnvIfNoCase User-Agent "CherryPicker/1.0" block_bad_bots_bot
+#SetEnvIfNoCase User-Agent "CherryPickerSE/1.0" block_bad_bots_bot
+#SetEnvIfNoCase User-Agent "CherryPickerElite/1.0" block_bad_bots_bot
+#SetEnvIfNoCase User-Agent "NICErsPRO" block_bad_bots_bot
+#SetEnvIfNoCase User-Agent "WebBandit/2.1" block_bad_bots_bot
+#SetEnvIfNoCase User-Agent "WebBandit/3.50" block_bad_bots_bot
+#SetEnvIfNoCase User-Agent "webbandit/4.00.0" block_bad_bots_bot
+#SetEnvIfNoCase User-Agent "WebEMailExtractor/1.0B" block_bad_bots_bot
+#SetEnvIfNoCase User-Agent "autoemailspider" block_bad_bots_bot
+#SetEnvIfNoCase User-Agent "^libwww-perl" block_bad_bots
+#SetEnvIfNoCase User-Agent "^WordPress/2\.0\.2" block_bad_bots
+#SetEnvIfNoCase User-Agent "^Opera/9\.0 \(Windows NT 5\.1; U; en\)" block_bad_bots
+#SetEnvIfNoCase User-Agent "^PycURL/7\.15\.5$" block_bad_bots
+#SetEnvIfNoCase User-Agent "^TurnitinBot" block_bad_bots
+#SetEnvIfNoCase User-Agent "^West Wind Internet Protocols" block_bad_bots
+#SetEnvIfNoCase User-Agent "^POE::Component::Client::HTTP/" block_bad_bots
+#SetEnvIfNoCase User-Agent "^User-Agent: Mozilla/4.0" block_bad_bots
+#SetEnvIfNoCase User-Agent "netforex" block_bad_bots
+#SetEnvIfNoCase User-Agent "^Java/" block_bad_bots
+#SetEnvIfNoCase User-Agent "^SMBot/" block_bad_bots
+#SetEnvIfNoCase User-Agent "^Mozilla/4.0 \(compatible; MSIE 4\.0; Windows NT; \.\.\.\.\.\./1\.0 \)$" block_bad_bots
+#SetEnvIfNoCase User-Agent "envolk" block_bad_bots
+#SetEnvIfNoCase User-Agent "^TMCrawler" block_bad_bots
+#SetEnvIfNoCase User-Agent "^Opera/6\.01 \(Windows ME; U\) \[en\]" block_bad_bots
+#SetEnvIfNoCase User-Agent "^NASA Search" block_bad_bots
+#SetEnvIfNoCase User-Agent "^TrackBack/" block_bad_bots
+#SetEnvIfNoCase User-Agent "^Mozilla/4\.0 \(compatible; MSIE 6\.0; Windows NT 5\.0; Maxthon\)$" block_bad_bots
+#SetEnvIfNoCase User-Agent "QihooBot" block_bad_bots
+#SetEnvIfNoCase User-Agent "^Gigabot/.\.." block_bad_bots
+#SetEnvIfNoCase User-Agent "K-Meleon/0\.8" block_bad_bots
+#SetEnvIfNoCase User-Agent "Twiceler" block_bad_bots
+
+
+#<Directory "/srv/http">
+#  Order Allow,Deny
+#  Allow from all
+#  Deny from env=block_bad_bots
+#</Directory>
+
+## End test 1 blocking bad_bots
+
+
+## Test 2 blocking bots
+
+RewriteEngine On
+
+# Set a general robots.txt file (For all virtual hosts here) to a file apache can access
+RewriteRule ^/robots.txt$ /srv/http/robots.txt [L]
+# a robots.txt file is the now the only file that will be allowed to be downloaded by any bots blocked here below
+
+
+# Block fake google when it's not coming from their IP range's (A fake googlebot) [F] => Failure
+RewriteCond %{HTTP:X-FORWARDED-FOR} !^66\.249\.(6[4-9]|[78][0-9]|9[0-5])\.
+RewriteCond %{HTTP_USER_AGENT} ^Mozilla/5\.0\ \(compatible;\ Googlebot/2\.[01];\ \+http://www\.google\.com/bot\.html\)$ [NC]
+RewriteRule .* - [F,L]
+# End if match
+
+# IF THE UA STARTS WITH THESE
+RewriteCond %{HTTP_USER_AGENT} ^(aesop_com_spiderman|alexibot|backweb|bandit|batchftp|bigfoot) [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^(black.?hole|blackwidow|blowfish|botalot|buddy|builtbottough|bullseye) [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^(cheesebot|cherrypicker|chinaclaw|collector|copier|copyrightcheck) [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^(cosmos|crescent|curl|custo|da|diibot|disco|dittospyder|dragonfly) [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^(drip|easydl|ebingbong|ecatch|eirgrabber|emailcollector|emailsiphon) [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^(emailwolf|erocrawler|exabot|eyenetie|filehound|flashget|flunky) [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^(frontpage|getright|getweb|go.?zilla|go-ahead-got-it|gotit|grabnet) [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^(grafula|harvest|hloader|hmview|httplib|httrack|humanlinks|ilsebot) [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^(infonavirobot|infotekies|intelliseek|interget|iria|jennybot|jetcar) [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^(joc|justview|jyxobot|kenjin|keyword|larbin|leechftp|lexibot|lftp|libweb) [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^(likse|linkscan|linkwalker|lnspiderguy|lwp|magnet|mag-net|markwatch) [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^(mata.?hari|memo|microsoft.?url|midown.?tool|miixpc|mirror|missigua) [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^(mister.?pix|moget|mozilla.?newt|nameprotect|navroad|backdoorbot|nearsite) [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^(net.?vampire|netants|netcraft|netmechanic|netspider|nextgensearchbot) [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^(attach|nicerspro|nimblecrawler|npbot|octopus|offline.?explorer) [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^(offline.?navigator|openfind|outfoxbot|pagegrabber|papa|pavuk) [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^(pcbrowser|php.?version.?tracker|pockey|propowerbot|prowebwalker) [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^(psbot|pump|queryn|recorder|realdownload|reaper|reget|true_robot) [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^(repomonkey|rma|internetseer|sitesnagger|siphon|slysearch|smartdownload) [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^(snake|snapbot|snoopy|sogou|spacebison|spankbot|spanner|sqworm|superbot) [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^(superhttp|surfbot|asterias|suzuran|szukacz|takeout|teleport) [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^(telesoft|the.?intraformant|thenomad|tighttwatbot|titan|urldispatcher) [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^(turingos|turnitinbot|urly.?warning|vacuum|vci|voideye|whacker) [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^(libwww-perl|widow|wisenutbot|wwwoffle|xaldon|xenu|zeus|zyborg|anonymouse) [NC,OR]
+RewriteCond %{HTTP_USER_AGENT} ^(Sogou\ web\ spider) [NC]
+# ISSUE 403 / SERVE ERRORDOCUMENT
+RewriteRule . - [F,L]
+# End if match
+
+# Defenite blocks
+RewriteCond %{HTTP_USER_AGENT} ^Mozilla/5\.0\ \(compatible;\ MJ12bot/v1\.4\.2;\ http://www\.majestic12\.co\.uk/bot\.php\?\+\)$ [NC,OR]
+# Baidus
+RewriteCond %{HTTP_USER_AGENT} ^Mozilla/5\.0\ \(compatible;\ Baiduspider/2\.[01];\ \+http://www\.baidu\.com/search/spider\.html\)$ [NC,OR]
+
+# Deepspider
+RewriteCond %{HTTP_USER_AGENT} ^Mozilla/5\.0\ \(compatible;\ OpenindexDeepSpider/Nutch-1\.[0-9]-dev;\ \+http://www\.openindex\.io/en/webmasters/spider\.html\)$ [NC,OR]
+
+# Known user agent strings defenitely belonging to bad spiders
+RewriteCond %{HTTP_USER_AGENT} ^web(zip|emaile|enhancer|fetch|go.?is|auto|bandit|clip|copier|master|reaper|sauger|site.?quester|whack) [NC,OR]
+
+# Yandex (russian google)
+#RewriteCond %{HTTP_USER_AGENT} ^Mozilla/5\.0\ \(compatible;\ YandexBot/3\.[01];\ \+http://yandex\.com/bots\)$ [NC,OR]
+
+# Pingdom
+RewriteCond %{HTTP_USER_AGENT} ^Pingdom\.com_bot_version_1\.4_\(http://www\.pingdom\.com/\) [NC,OR]
+
+# AhrefsBot
+RewriteCond %{HTTP_USER_AGENT} ^Mozilla/5\.0\ \(compatible;\ AhrefsBot/2\.[01];\ \+http://ahrefs\.com/robot/\)$ [NC,OR]
+
+# Block a rogue facebook application ?
+#RewriteCond %{HTTP_USER_AGENT} ^facebookexternalhit/1\.1\ \(\+http://www\.facebook\.com/externalhit_uatext.php\)$ [NC,OR]
+#
+# Vagabondo
+RewriteCond %{HTTP_USER_AGENT} ^Mozilla/4\.[01]\ \(compatible;\ \ Vagabondo/4\.0;\ webcrawler\ at\ wise-guys\ dot\ nl;\ http://webagent\.wise-guys\.nl/;\ http://www\.wise-guys\.nl/\) [NC,OR]
+
+# Ezooms
+RewriteCond %{HTTP_USER_AGENT} ^Mozilla/5\.0\ \(compatible;\ Ezooms/1\.[01];\ ezooms\.bot@gmail\.com\)$ [NC,OR]
+
+# Monalisa
+RewriteCond %{HTTP_USER_AGENT} ^Synthesio\ Crawler\ release\ MonaLisa\ \(contact\ at\ synthesio\ dot\ fr\)$ [NC,OR]
+
+# ANYWHERE IN UA -- GREEDY REGEX
+RewriteCond %{HTTP_USER_AGENT} ^.*(craftbot|download|extract|stripper|sucker|ninja|clshttp|webspider|leacher|collector|grabber|webpictures).*$ [NC]
+
+# ISSUE 403 / SERVE ERRORDOCUMENT
+RewriteRule . - [F,L]
+# End if match
+
+
+
+## TEst 3 for setting bad_bost
+
+SetEnvIfNoCase User-Agent ^$ bad_bot
+SetEnvIfNoCase User-Agent "^AESOP_com_SpiderMan" bad_bot
+SetEnvIfNoCase User-Agent "^Alexibot" bad_bot
+SetEnvIfNoCase User-Agent "Anonymouse.org" bad_bot
+SetEnvIfNoCase User-Agent "^asterias" bad_bot
+SetEnvIfNoCase User-Agent "^attach" bad_bot
+SetEnvIfNoCase User-Agent "^BackDoorBot" bad_bot
+SetEnvIfNoCase User-Agent "^BackWeb" bad_bot
+SetEnvIfNoCase User-Agent "Bandit" bad_bottest
+SetEnvIfNoCase User-Agent "^Baiduspider" bad_bot
+SetEnvIfNoCase User-Agent "^BatchFTP" bad_bot
+SetEnvIfNoCase User-Agent "^Bigfoot" bad_bot
+SetEnvIfNoCase User-Agent "^Black.Hole" bad_bot
+SetEnvIfNoCase User-Agent "^BlackWidow" bad_bot
+SetEnvIfNoCase User-Agent "^BlowFish" bad_bot
+SetEnvIfNoCase User-Agent "^Bot mailto:craftbot@yahoo.com" bad_bot
+SetEnvIfNoCase User-Agent "^BotALot" bad_bot
+SetEnvIfNoCase User-Agent "Buddy" bad_bot
+SetEnvIfNoCase User-Agent "^BuiltBotTough" bad_bot
+SetEnvIfNoCase User-Agent "^Bullseye" bad_bot
+SetEnvIfNoCase User-Agent "^BunnySlippers" bad_bot
+SetEnvIfNoCase User-Agent "^Cegbfeieh" bad_bot
+SetEnvIfNoCase User-Agent "^CheeseBot" bad_bot
+SetEnvIfNoCase User-Agent "^CherryPicker" bad_bot
+SetEnvIfNoCase User-Agent "^ChinaClaw" bad_bot
+SetEnvIfNoCase User-Agent "Collector" bad_bot
+SetEnvIfNoCase User-Agent "Copier" bad_bot
+SetEnvIfNoCase User-Agent "^CopyRightCheck" bad_bot
+SetEnvIfNoCase User-Agent "^cosmos" bad_bot
+SetEnvIfNoCase User-Agent "^Crescent" bad_bot
+SetEnvIfNoCase User-Agent "^Curl" bad_bot
+SetEnvIfNoCase User-Agent "^Custo" bad_bot
+SetEnvIfNoCase User-Agent "^DA" bad_bot
+SetEnvIfNoCase User-Agent "^DISCo" bad_bot
+SetEnvIfNoCase User-Agent "^DIIbot" bad_bot
+SetEnvIfNoCase User-Agent "^DittoSpyder" bad_bot
+SetEnvIfNoCase User-Agent "^Download" bad_bot
+SetEnvIfNoCase User-Agent "^Download Demon" bad_bot
+SetEnvIfNoCase User-Agent "^Download Devil" bad_bot
+SetEnvIfNoCase User-Agent "^Download Wonder" bad_bot
+SetEnvIfNoCase User-Agent "Downloader" bad_bot
+SetEnvIfNoCase User-Agent "^dragonfly" bad_bot
+SetEnvIfNoCase User-Agent "^Drip" bad_bot
+SetEnvIfNoCase User-Agent "^eCatch" bad_bot
+SetEnvIfNoCase User-Agent "^EasyDL" bad_bot
+SetEnvIfNoCase User-Agent "^ebingbong" bad_bot
+SetEnvIfNoCase User-Agent "^EirGrabber" bad_bot
+SetEnvIfNoCase User-Agent "^EmailCollector" bad_bot
+SetEnvIfNoCase User-Agent "^EmailSiphon" bad_bot
+SetEnvIfNoCase User-Agent "^EmailWolf" bad_bot
+SetEnvIfNoCase User-Agent "^EroCrawler" bad_bot
+SetEnvIfNoCase User-Agent "^Exabot" bad_bot
+SetEnvIfNoCase User-Agent "^Express WebPictures" bad_bot
+SetEnvIfNoCase User-Agent "Extractor" bad_bot
+SetEnvIfNoCase User-Agent "^EyeNetIE" bad_bot
+SetEnvIfNoCase User-Agent "^FileHound" bad_bot
+SetEnvIfNoCase User-Agent "^FlashGet" bad_bot
+SetEnvIfNoCase User-Agent "^Foobot" bad_bot
+SetEnvIfNoCase User-Agent "^flunky" bad_bot
+SetEnvIfNoCase User-Agent "^FrontPage" bad_bot
+SetEnvIfNoCase User-Agent "^GetRight" bad_bot
+SetEnvIfNoCase User-Agent "^GetSmart" bad_bot
+SetEnvIfNoCase User-Agent "^GetWeb!" bad_bot
+SetEnvIfNoCase User-Agent "^Go!Zilla" bad_bot
+SetEnvIfNoCase User-Agent "Google Wireless Transcoder" bad_bot
+SetEnvIfNoCase User-Agent "^Go-Ahead-Got-It" bad_bot
+SetEnvIfNoCase User-Agent "^gotit" bad_bot
+SetEnvIfNoCase User-Agent "Grabber" bad_bot
+SetEnvIfNoCase User-Agent "^GrabNet" bad_bot
+SetEnvIfNoCase User-Agent "^Grafula" bad_bot
+SetEnvIfNoCase User-Agent "^Harvest" bad_bot
+SetEnvIfNoCase User-Agent "^hloader" bad_bot
+SetEnvIfNoCase User-Agent "^HMView" bad_bot
+SetEnvIfNoCase User-Agent "^httplib" bad_bot
+SetEnvIfNoCase User-Agent "^HTTrack" bad_bot
+SetEnvIfNoCase User-Agent "^humanlinks" bad_bot
+SetEnvIfNoCase User-Agent "^ia_archiver" bad_bot
+SetEnvIfNoCase User-Agent "^IlseBot" bad_bot
+SetEnvIfNoCase User-Agent "^Image Stripper" bad_bot
+SetEnvIfNoCase User-Agent "^Image Sucker" bad_bot
+SetEnvIfNoCase User-Agent "Indy Library" bad_bot
+SetEnvIfNoCase User-Agent "^InfoNaviRobot" bad_bot
+SetEnvIfNoCase User-Agent "^InfoTekies" bad_bot
+SetEnvIfNoCase User-Agent "^Intelliseek" bad_bot
+SetEnvIfNoCase User-Agent "^InterGET" bad_bot
+SetEnvIfNoCase User-Agent "^Internet Ninja" bad_bot
+SetEnvIfNoCase User-Agent "^Iria" bad_bot
+SetEnvIfNoCase User-Agent "^Jakarta" bad_bot
+SetEnvIfNoCase User-Agent "^JennyBot" bad_bot
+SetEnvIfNoCase User-Agent "^JetCar" bad_bot
+SetEnvIfNoCase User-Agent "^JOC" bad_bot
+SetEnvIfNoCase User-Agent "^JustView" bad_bot
+SetEnvIfNoCase User-Agent "^Jyxobot" bad_bot
+SetEnvIfNoCase User-Agent "^Kenjin.Spider" bad_bot
+SetEnvIfNoCase User-Agent "^Keyword.Density" bad_bot
+SetEnvIfNoCase User-Agent "^larbin" bad_bot
+SetEnvIfNoCase User-Agent "^LeechFTP" bad_bot
+SetEnvIfNoCase User-Agent "^LexiBot" bad_bot
+SetEnvIfNoCase User-Agent "^lftp" bad_bot
+SetEnvIfNoCase User-Agent "^libWeb/clsHTTP" bad_bot
+SetEnvIfNoCase User-Agent "^likse" bad_bot
+SetEnvIfNoCase User-Agent "^LinkextractorPro" bad_bot
+SetEnvIfNoCase User-Agent "^LinkScan/8.1a.Unix" bad_bo
+SetEnvIfNoCase User-Agent "^LNSpiderguy" bad_bott
+SetEnvIfNoCase User-Agent "^LinkWalker" bad_bot
+SetEnvIfNoCase User-Agent "^lwp-trivial" bad_bot
+SetEnvIfNoCase User-Agent "^LWP::Simple" bad_bot
+SetEnvIfNoCase User-Agent "^Magnet" bad_bot
+SetEnvIfNoCase User-Agent "^Mag-Net" bad_bot
+SetEnvIfNoCase User-Agent "^MarkWatch" bad_bot
+SetEnvIfNoCase User-Agent "^Mass Downloader" bad_bot
+SetEnvIfNoCase User-Agent "^Mata.Hari" bad_bot
+SetEnvIfNoCase User-Agent "^Memo" bad_bot
+SetEnvIfNoCase User-Agent "^Microsoft.URL" bad_bot
+SetEnvIfNoCase User-Agent "^Microsoft URL Control" bad_bot
+SetEnvIfNoCase User-Agent "^MIDown tool" bad_bot
+SetEnvIfNoCase User-Agent "^MIIxpc" bad_bot
+SetEnvIfNoCase User-Agent "^Mirror" bad_bot
+SetEnvIfNoCase User-Agent "^Missigua Locator" bad_bot
+SetEnvIfNoCase User-Agent "^Mister PiX" bad_bot
+SetEnvIfNoCase User-Agent "^moget" bad_bot
+SetEnvIfNoCase User-Agent "^Mozilla/3.Mozilla/2.01" bad_bot
+SetEnvIfNoCase User-Agent "^Mozilla.*NEWT" bad_bot
+SetEnvIfNoCase User-Agent "^NAMEPROTECT" bad_bot
+SetEnvIfNoCase User-Agent "^Navroad" bad_bot
+SetEnvIfNoCase User-Agent "^NearSite" bad_bot
+SetEnvIfNoCase User-Agent "^NetAnts" bad_bot
+SetEnvIfNoCase User-Agent "^Netcraft" bad_bot
+SetEnvIfNoCase User-Agent "^NetMechanic" bad_bot
+SetEnvIfNoCase User-Agent "^NetSpider" bad_bot
+SetEnvIfNoCase User-Agent "^Net Vampire" bad_bot
+SetEnvIfNoCase User-Agent "^NetZIP" bad_bot
+SetEnvIfNoCase User-Agent "^NextGenSearchBot" bad_bot
+SetEnvIfNoCase User-Agent "^NG" bad_bot
+SetEnvIfNoCase User-Agent "^NICErsPRO" bad_bot
+SetEnvIfNoCase User-Agent "^NimbleCrawler" bad_bot
+SetEnvIfNoCase User-Agent "^Ninja" bad_bot
+SetEnvIfNoCase User-Agent "^NPbot" bad_bot
+SetEnvIfNoCase User-Agent "^Octopus" bad_bot
+SetEnvIfNoCase User-Agent "^Offline Explorer" bad_bot
+SetEnvIfNoCase User-Agent "^Offline Navigator" bad_bot
+SetEnvIfNoCase User-Agent "^Openfind" bad_bot
+SetEnvIfNoCase User-Agent "^OutfoxBot" bad_bot
+SetEnvIfNoCase User-Agent "^PageGrabber" bad_bot
+SetEnvIfNoCase User-Agent "^Papa Foto" bad_bot
+SetEnvIfNoCase User-Agent "^pavuk" bad_bot
+SetEnvIfNoCase User-Agent "^pcBrowser" bad_bot
+SetEnvIfNoCase User-Agent "^PHP version tracker" bad_bot
+SetEnvIfNoCase User-Agent "^Pockey" bad_bot
+SetEnvIfNoCase User-Agent "^ProPowerBot/2.14" bad_bot
+SetEnvIfNoCase User-Agent "^ProWebWalker" bad_bot
+SetEnvIfNoCase User-Agent "^psbot" bad_bot
+SetEnvIfNoCase User-Agent "^Pump" bad_bot
+SetEnvIfNoCase User-Agent "^QueryN.Metasearch" bad_bot
+SetEnvIfNoCase User-Agent "^RealDownload" bad_bot
+SetEnvIfNoCase User-Agent "Reaper" bad_bot
+SetEnvIfNoCase User-Agent "Recorder" bad_bot
+SetEnvIfNoCase User-Agent "^ReGet" bad_bot
+SetEnvIfNoCase User-Agent "^RepoMonkey" bad_bot
+SetEnvIfNoCase User-Agent "^RMA" bad_bot
+SetEnvIfNoCase User-Agent "Siphon" bad_bot
+SetEnvIfNoCase User-Agent "sitecheck.internetseer.com" bad_bot
+SetEnvIfNoCase User-Agent "^SiteSnagger" bad_bot
+SetEnvIfNoCase User-Agent "^SlySearch" bad_bot
+SetEnvIfNoCase User-Agent "^SmartDownload" bad_bot
+SetEnvIfNoCase User-Agent "^Snake" bad_bot
+SetEnvIfNoCase User-Agent "^Snapbot" bad_bot
+SetEnvIfNoCase User-Agent "^Snoopy" bad_bot
+SetEnvIfNoCase User-Agent "^sogou" bad_bot
+SetEnvIfNoCase User-Agent "^SpaceBison" bad_bot
+SetEnvIfNoCase User-Agent "^SpankBot" bad_bot
+SetEnvIfNoCase User-Agent "^spanner" bad_bot
+SetEnvIfNoCase User-Agent "^Sqworm" bad_bot
+SetEnvIfNoCase User-Agent "Stripper" bad_bot
+SetEnvIfNoCase User-Agent "Sucker" bad_bot
+SetEnvIfNoCase User-Agent "^SuperBot" bad_bot
+SetEnvIfNoCase User-Agent "^SuperHTTP" bad_bot
+SetEnvIfNoCase User-Agent "^Surfbot" bad_bot
+SetEnvIfNoCase User-Agent "^suzuran" bad_bot
+SetEnvIfNoCase User-Agent "^Szukacz/1.4" bad_bot
+SetEnvIfNoCase User-Agent "^tAkeOut" bad_bot
+SetEnvIfNoCase User-Agent "^Teleport" bad_bot
+SetEnvIfNoCase User-Agent "^Telesoft" bad_bot
+SetEnvIfNoCase User-Agent "^TurnitinBot/1.5" bad_bot
+SetEnvIfNoCase User-Agent "^The.Intraformant" bad_bot
+SetEnvIfNoCase User-Agent "^TheNomad" bad_bot
+SetEnvIfNoCase User-Agent "^TightTwatBot" bad_bot
+SetEnvIfNoCase User-Agent "^Titan" bad_bot
+SetEnvIfNoCase User-Agent "^toCrawl/UrlDispatcher" bad_bot
+SetEnvIfNoCase User-Agent "^True_Robot" bad_bot
+SetEnvIfNoCase User-Agent "^turingos" bad_bot
+SetEnvIfNoCase User-Agent "^TurnitinBot" bad_bot
+SetEnvIfNoCase User-Agent "^URLy.Warning" bad_bot
+SetEnvIfNoCase User-Agent "^Vacuum" bad_bot
+SetEnvIfNoCase User-Agent "^VCI" bad_bot
+SetEnvIfNoCase User-Agent "^VoidEYE" bad_bot
+SetEnvIfNoCase User-Agent "^Web Image Collector" bad_bot
+SetEnvIfNoCase User-Agent "^Web Sucker" bad_bot
+SetEnvIfNoCase User-Agent "^WebAuto" bad_bot
+SetEnvIfNoCase User-Agent "^WebBandit" bad_bot
+SetEnvIfNoCase User-Agent "^Webclipping.com" bad_bot
+SetEnvIfNoCase User-Agent "^WebCopier" bad_bot
+SetEnvIfNoCase User-Agent "^WebEMailExtrac.*" bad_bot
+SetEnvIfNoCase User-Agent "^WebEnhancer" bad_bot
+SetEnvIfNoCase User-Agent "^WebFetch" bad_bot
+SetEnvIfNoCase User-Agent "^WebGo IS" bad_bot
+SetEnvIfNoCase User-Agent "^Web.Image.Collector" bad_bot
+SetEnvIfNoCase User-Agent "^WebLeacher" bad_bot
+SetEnvIfNoCase User-Agent "^WebmasterWorldForumBot" bad_bot
+SetEnvIfNoCase User-Agent "^WebReaper" bad_bot
+SetEnvIfNoCase User-Agent "^WebSauger" bad_bot
+SetEnvIfNoCase User-Agent "^WebSite" bad_bot
+SetEnvIfNoCase User-Agent "^Website eXtractor" bad_bot
+SetEnvIfNoCase User-Agent "^Website Quester" bad_bot
+SetEnvIfNoCase User-Agent "^Webster" bad_bot
+SetEnvIfNoCase User-Agent "^WebStripper" bad_bot
+SetEnvIfNoCase User-Agent "^WebWhacker" bad_bot
+SetEnvIfNoCase User-Agent "^WebZIP" bad_bot
+SetEnvIfNoCase User-Agent "Whacker" bad_bot
+SetEnvIfNoCase User-Agent "^Widow" bad_bot
+SetEnvIfNoCase User-Agent "^WISENutbot" bad_bot
+SetEnvIfNoCase User-Agent "^WWWOFFLE" bad_bot
+SetEnvIfNoCase User-Agent "^WWW-Collector-E" bad_bot
+SetEnvIfNoCase User-Agent "^Xaldon" bad_bot
+SetEnvIfNoCase User-Agent "^Xenu" bad_bot
+SetEnvIfNoCase User-Agent "^Zeus" bad_bot
+SetEnvIfNoCase User-Agent "^Zyborg" bad_bot
+ 
+<Directory "/srv/http">
+  <Limit GET POST HEAD>
+  Order Allow,Deny
+  Allow from all
+  Deny from env=bad_bot
+  </Limit>
+</Directory>
+
+
+
+
+#<Directory "/srv/http">
+#  Order Allow,Deny
+#  Allow from all
+#  Deny from env=block_bad_bots
+#</Directory>
+

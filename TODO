@@ -1,0 +1,253 @@
+################################################################################
+## Boban changes
+#pacman -S --noconfirm git
+
+#git clone https://github.com/boban-dj/arch-installer
+
+
+
+## TODO
+################################################################################
+
+## arch-install server plain, arch-install local machine
+## xargs pacman install packages packages.aur
+## integrate copy_config.sh
+
+		# system
+		/etc/httpd/conf
+		/etc/lightdm
+		/etc/makepkg.conf
+		/etc/nanorc
+		/etc/pacman.d/mirrorlist
+		/etc/php/php.ini
+		/etc/ssh/sshd_config
+		# home
+		/home/boban/.bashrc
+		/home/boban/.bash_profile
+		/home/boban/.i3
+		/home/boban/.i3status.conf
+		/home/boban/.config/Thunar
+		/home/boban/.config/xfce4
+		/home/boban/.cache/sessions
+		/home/boban/.dir_colors
+		/home/boban/.dir_colors_256
+		/home/boban/.xinitrc
+		/home/boban/.Xresources.d
+		/home/boban/.Xresources
+		/home/boban/.nanorc
+		/home/boban/Packages
+		/home/boban/Packages.aur
+		/home/boban/Scripts
+
+
+
+
+## from aui script for mariadb secure etc
+
+#WEBSERVER {{{
+install_web_server(){
+  install_adminer(){ #{{{
+    aur_package_install "adminer"
+    local ADMINER=`cat /etc/httpd/conf/httpd.conf | grep Adminer`
+    [[ -z $ADMINER ]] && echo -e '\n# Adminer Configuration\nInclude conf/extra/httpd-adminer.conf' >> /etc/httpd/conf/httpd.conf
+  } #}}}
+  install_mariadb(){ #{{{
+    package_install "mariadb"
+    /usr/bin/mysql_install_db --user=mysql --basedir=/usr --datadir=/var/lib/mysql
+    system_ctl enable mysqld
+    systemctl start mysqld
+    /usr/bin/mysql_secure_installation
+  } #}}}
+  install_postgresql(){ #{{{
+    package_install "postgresql"
+    systemd-tmpfiles --create postgresql.conf
+    mkdir -p /var/lib/postgres
+    chown -R postgres:postgres /var/lib/postgres
+    echo "Enter your new postgres account password:"
+    passwd postgres
+    su - postgres -c "initdb --locale ${LOCALE}.UTF-8 -D /var/lib/postgres/data"
+    system_ctl enable postgresql
+    system_ctl start postgresql
+    read_input_text "Install Postgis" $POSTGIS
+    [[ $OPTION == y ]] && install_postgis
+  } #}}}
+  install_postgis(){ #{{{
+    package_install "postgis"
+    sudo -u postgres createuser --superuser $username
+    sudo -u postgres createdb $username
+    sudo -u ${username} psql -d postgres -c "UPDATE pg_database SET datistemplate=FALSE WHERE datname='template1';"
+    sudo -u ${username} psql -d postgres -c "DROP DATABASE template1;"
+    sudo -u ${username} psql -d postgres -c "CREATE DATABASE template1 WITH TEMPLATE = template0 ENCODING = 'UNICODE';"
+    sudo -u ${username} psql -d postgres -c "UPDATE pg_database SET datistemplate = TRUE WHERE datname = 'template1';"
+    sudo -u ${username} psql -d postgres -c "\c template1"
+    sudo -u ${username} psql -d postgres -c "VACUUM FREEZE;"
+    sudo -u ${username} psql -d postgres -c "UPDATE pg_database SET datallowconn=FALSE WHERE datname='template1';"
+
+    POSTGIS_VERSION=`pacman -Qi postgis | sed '2!d' | awk '{print substr($3,0,3)}'`
+    POSTGIS_PATH=`pg_config --sharedir`/contrib/postgis-$POSTGIS_VERSION
+
+    sudo -u ${username} psql -d postgres -c "UPDATE pg_database SET datistemplate=FALSE WHERE datname='template_postgis';"
+    sudo -u ${username} dropdb template_postgis
+
+    sudo -u ${username} createdb -E UTF8 template_postgis
+    sudo -u ${username} createlang -d template_postgis plpgsql
+    sudo -u ${username} psql -d postgres -c "UPDATE pg_database SET datistemplate='true' WHERE datname='template_postgis';"
+
+    #PostGIS:
+        sudo -u ${username} psql -d template_postgis -f $POSTGIS_PATH/postgis.sql
+        sudo -u ${username} psql -d template_postgis -f $POSTGIS_PATH/spatial_ref_sys.sql
+        #psql -d template_postgis -f $POSTGIS_PATH/postgis_comments.sql
+    #with raster support:
+        sudo -u ${username} psql -d template_postgis -f $POSTGIS_PATH/rtpostgis.sql
+        #sudo -u ${username} psql -d template_postgis -f $POSTGIS_PATH/raster_comments.sql
+    #with topology support:
+        #sudo -u ${username} psql -d template_postgis -f $POSTGIS_PATH/topology.sql
+        #sudo -u ${username} psql -d template_postgis -f $POSTGIS_PATH/topology_comments.sql
+
+    sudo -u ${username} psql -d template_postgis -c "GRANT ALL ON geometry_columns TO PUBLIC;"
+    sudo -u ${username} psql -d template_postgis -c "GRANT ALL ON geography_columns TO PUBLIC;"
+    sudo -u ${username} psql -d template_postgis -c "GRANT ALL ON spatial_ref_sys TO PUBLIC;"
+
+    echo -e "GeoDB Template: createdb -T template_postgis -E UTF8 <db_name>"
+  } #}}}
+  configure_php(){ #{{{
+    if [[ -f /etc/php/php.ini.pacnew ]]; then
+      mv -v /etc/php/php.ini /etc/php/php.ini.pacold
+      mv -v /etc/php/php.ini.pacnew /etc/php/php.ini
+      rm -v /etc/php/php.ini.aui
+    fi
+    [[ -f /etc/php/php.ini.aui ]] && echo "/etc/php/php.ini.aui" || cp -v /etc/php/php.ini /etc/php/php.ini.aui
+    if [[ $1 == mariadb ]]; then
+      sed -i '/mysqli.so/s/^;//' /etc/php/php.ini
+      sed -i '/mysql.so/s/^;//' /etc/php/php.ini
+      sed -i '/skip-networking/s/^/#/' /etc/mysql/my.cnf
+    else
+      sed -i '/pgsql.so/s/^;//' /etc/php/php.ini
+    fi
+    sed -i '/mcrypt.so/s/^;//' /etc/php/php.ini
+    sed -i '/gd.so/s/^;//' /etc/php/php.ini
+    sed -i '/display_errors=/s/off/on/' /etc/php/php.ini
+  } #}}}
+  configure_php_apache(){ #{{{
+    if [[ -f /etc/httpd/conf/httpd.conf.pacnew ]]; then
+      mv -v /etc/httpd/conf/httpd.conf.pacnew /etc/httpd/conf/httpd.conf
+      rm -v /etc/httpd/conf/httpd.conf.aui
+    fi
+    [[ -f /etc/httpd/conf/httpd.conf.aui ]] && echo "/etc/httpd/conf/httpd.conf.aui" || cp -v /etc/httpd/conf/httpd.conf /etc/httpd/conf/httpd.conf.aui
+    local MOD_PHP=`cat /etc/httpd/conf/httpd.conf | grep php5_module.conf`
+    if [[ -z $MOD_PHP ]]; then
+      echo -e 'application/x-httpd-php5                php php5' >> /etc/httpd/conf/mime.types
+      sed -i '/LoadModule dir_module modules\/mod_dir.so/a\LoadModule php5_module modules\/libphp5.so' /etc/httpd/conf/httpd.conf
+      echo -e '\n# Use for PHP 5.x:\nInclude conf/extra/php5_module.conf\n\nAddHandler php5-script php' >> /etc/httpd/conf/httpd.conf
+      replace_line 'DirectoryIndex\ index.html' 'DirectoryIndex\ index.html\ index.php' /etc/httpd/conf/httpd.conf
+    fi
+  } #}}}
+  configure_php_nginx(){ #{{{
+    if [[ -f /etc/nginx/nginx.conf.pacnew ]]; then
+      mv -v /etc/nginx/nginx.conf.pacnew /etc/nginx/nginx.conf
+      rm -v /etc/nginx/nginx.conf.aui
+    fi
+    [[ -f /etc/nginx/nginx.conf.aui ]] && cp -v /etc/nginx/nginx.conf.aui /etc/nginx/nginx.conf || cp -v /etc/nginx/nginx.conf /etc/nginx/nginx.conf.aui
+    sed -i -e '/location ~ \.php$ {/,/}/d' /etc/nginx/nginx.conf
+    sed -i -e '/pass the PHP/a\        #\n        location ~ \.php$ {\n            fastcgi_pass   unix:/var/run/php-fpm/php-fpm.sock;\n            fastcgi_index  index.php;\n            root           /srv/http;\n            include        fastcgi.conf;\n        }' /etc/nginx/nginx.conf
+  } #}}}
+  create_sites_folder(){ #{{{
+    [[ ! -f  /etc/httpd/conf/extra/httpd-userdir.conf.aui ]] && cp -v /etc/httpd/conf/extra/httpd-userdir.conf /etc/httpd/conf/extra/httpd-userdir.conf.aui
+    replace_line 'public_html' 'Sites' /etc/httpd/conf/extra/httpd-userdir.conf
+    su - ${username} -c "mkdir -p ~/Sites"
+    su - ${username} -c "chmod o+x ~/ && chmod -R o+x ~/Sites"
+    print_line
+    echo "The folder \"Sites\" has been created in your home"
+    echo "You can access your projects at \"http://localhost/~username\""
+    pause_function
+  } #}}}
+  print_title "WEB SERVER - https://wiki.archlinux.org/index.php/LAMP|LAPP"
+  print_info "*Adminer is installed by default in all options"
+  echo " 1) LAMP - APACHE, MariaDB & PHP"
+  echo " 2) LAPP - APACHE, POSTGRESQL & PHP"
+  echo " 3) LEMP - NGINX, MariaDB & PHP"
+  echo " 4) LEPP - NGINX, POSTGRESQL & PHP"
+  echo ""
+  echo " b) BACK"
+  echo ""
+  read_input $WEBSERVER
+  case "$OPTION" in
+    1)
+      package_install "apache php php-apache php-mcrypt php-gd"
+      install_mariadb
+      install_adminer
+      system_ctl enable httpd
+      configure_php_apache
+      configure_php "mariadb"
+      create_sites_folder
+      ;;
+    2)
+      package_install "apache php php-apache php-pgsql php-gd"
+      install_postgresql
+      install_adminer
+      system_ctl enable httpd
+      configure_php_apache
+      configure_php "postgresql"
+      create_sites_folder
+      ;;
+    3)
+      package_install "nginx php php-mcrypt php-fpm"
+      install_mariadb
+      system_ctl enable nginx
+      system_ctl enable php-fpm
+      configure_php_nginx
+      configure_php "mariadb"
+      ;;
+    4)
+      package_install "nginx php php-fpm php-pgsql"
+      install_postgresql
+      system_ctl enable nginx
+      system_ctl enable php-fpm
+      configure_php_nginx
+      configure_php "postgresql"
+      ;;
+  esac
+}
+#}}}
+
+## end aui
+
+
+#cp arch-installer/dotfiles/.bashrc arch-installer/dotfiles/.dir_colors arch-installer/dotfiles/.dir_colors_256 ~/
+#cp arch-installer/dotfiles/.bashrc arch-installer/dotfiles/.dir_colors arch-installer/dotfiles/.dir_colors_256 arch-installer/dotfiles/.nanorc /home/$user/
+#cp arch-installer/dotfiles/.bashrc arch-installer/dotfiles/.dir_colors arch-installer/dotfiles/.dir_colors_256 /root/
+#cp arch-installer/dotfiles/.bashrc arch-installer/dotfiles/.dir_colors arch-installer/dotfiles/.dir_colors_256 arch-installer/dotfiles/.nanorc /root/
+#cp arch-installer/dotfiles/.bash_profile ~/
+#cp arch-installer/dotfiles/.bash_profile /root
+#cp arch-installer/dotfiles/.Xresources ~/
+#cp arch-installer/dotfiles/.Xresources /root
+
+#cp /etc/X11/xinit/xinitrc ~/.xinitrc
+#echo "exec startxfce4" >> /home/$user/.xinitrc
+
+#cat arch-installer/dotfiles/httpd_supplement >> /etc/httpd/conf/httpd_conf
+
+#pacman -S --noconfirm firefox
+#sudo -u $user yaourt -A -S --noconfirm google-chrome 
+
+#pacman -S --noconfirm xdg-user-dirs && xdg-user-dirs-update
+
+# TODO httpd folders
+# usermod -aG http boban
+# chmod -R g+s /srv/http
+# setfacl -m -G g:http:rwx /srv/http
+# setfacl -m -Gd g:http:rwx /srv/http
+# getfacl /srv/http
+
+################################################################################
+
+## other features
+wget -qO- https://github.com/boban-dj/arch-installer/archive/master.zip | bsdtar -xvf-
+git issue arch iso
+
+##make http supplement outside httpd.conf:
+#crackers
+#image hot linking
+
+
+## END TODO
